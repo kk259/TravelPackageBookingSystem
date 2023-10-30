@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PassengerRepository extends JpaRepository<Passenger, Integer> {
     @Query("select p from Passenger p where p.passengerNumber = ?1")
-    public Passenger findPassengerByPassengerNumber(int passengerNumber);
+    Passenger findPassengerByPassengerNumber(int passengerNumber);
 }

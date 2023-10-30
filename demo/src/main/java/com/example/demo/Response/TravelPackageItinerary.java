@@ -1,8 +1,5 @@
 package com.example.demo.Response;
 
-import com.example.demo.Entity.Activity;
-import com.example.demo.Entity.Destination;
-
 import java.util.Set;
 
 public class TravelPackageItinerary {

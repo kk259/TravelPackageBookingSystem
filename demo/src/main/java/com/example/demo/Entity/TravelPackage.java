@@ -1,11 +1,13 @@
 package com.example.demo.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
 @Table
-@Entity(name="TravelPackage")
+@Entity(name = "TravelPackage")
 public class TravelPackage {
     @Id
     @Column(name = "travel_package_name")
@@ -13,15 +15,16 @@ public class TravelPackage {
     @Column(name = "passenger_capacity")
     int passengerCapacity;
     @Transient
+    @JsonIgnore
     int currentEnrollmentCount;
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "travel_package_destinations",
             joinColumns = @JoinColumn(name = "travel_package_name"),
             inverseJoinColumns = @JoinColumn(name = "destination_name")
     )
     private Set<Destination> destinations = new HashSet<>();
-    @OneToMany
+    @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "travel_package_passengers",
             joinColumns = @JoinColumn(name = "travel_package_name"),
@@ -32,7 +35,7 @@ public class TravelPackage {
     public TravelPackage() {
     }
 
-    public TravelPackage(String travelPackageName,  Set<Destination> destinations,int passengerCapacity) {
+    public TravelPackage(String travelPackageName, Set<Destination> destinations, int passengerCapacity) {
         this.travelPackageName = travelPackageName;
         this.passengerCapacity = passengerCapacity;
         this.destinations = destinations;

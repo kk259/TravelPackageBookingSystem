@@ -1,15 +1,18 @@
 package com.example.demo.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 
 @Table
-@Entity(name="Activity")
+@Entity(name = "Activity")
 public class Activity {
     @Id
     String name;
     String description;
     int cost;
     int capacity;
+    @JsonIgnore
     int occupied;
     @ManyToOne
     @JoinColumn(name = "destination_name")
@@ -20,7 +23,7 @@ public class Activity {
     public Activity(String name, String description, int cost, int capacity, int occupied, Destination destination) {
         this.name = name;
         this.description = description;
-        this.cost = 250;
+        this.cost = 100;
         this.capacity = 15;
         this.occupied = 0;
         this.destination = destination;
@@ -30,8 +33,16 @@ public class Activity {
         this.name = name;
         this.description = description;
         this.destination = destination;
-        this.cost = 250;
+        this.cost = 100;
         this.capacity = 15;
+        this.occupied = 0;
+    }
+
+    public Activity(String name, String description, Destination destination, int capacity) {
+        this.name = name;
+        this.description = description;
+        this.destination = destination;
+        this.capacity = capacity;
         this.occupied = 0;
     }
 

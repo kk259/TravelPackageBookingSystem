@@ -1,19 +1,19 @@
 package com.example.demo.Entity;
 
 import javax.persistence.*;
-import java.io.Serializable;
 
 @Table
-@Entity(name="PassengerActivity")
+@Entity(name = "PassengerActivity")
 public class PassengerActivity {
     @Id
-    @SequenceGenerator(name = "passengerActivitySequence", sequenceName = "passengerActivitySequence",allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.AUTO , generator = "passengerActivitySequence")
+    @SequenceGenerator(name = "passengerActivitySequence", sequenceName = "passengerActivitySequence", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "passengerActivitySequence")
     int passengerActivityId;
     int passengerNumber;
     String activityName;
     int amountPaid;
     String destinationName;
+
     public PassengerActivity() {
     }
 

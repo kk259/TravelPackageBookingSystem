@@ -31,7 +31,7 @@ public class TravelPackageCreationRequest {
     }
 
     public int getPassengerCapacity() {
-        if(this.passengerCapacity==0){
+        if (this.passengerCapacity == 0) {
             return 100;
         }
         return passengerCapacity;

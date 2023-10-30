@@ -13,6 +13,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +25,7 @@ public class TravelPackageBookingSystemConfiguration {
                                         DestinationRepository destinationRepository,
                                         ActivityRepository activityRepository,
                                         PassengerRepository passengerRepository
-                                        ) {
+    ) {
         return args -> {
             Set<Destination> destinations = new HashSet<>();
             Destination Bali = new Destination("Bali, Indonesia");
@@ -48,13 +49,16 @@ public class TravelPackageBookingSystemConfiguration {
 
             Set<Passenger> passengers = new HashSet<>();
             passengers.add(new Passenger(
+                    1,
                     "raj",
                     Passenger.PassengerType.GOLD
             ));
             passengers.add(new Passenger(
+                    2,
                     "dev"
             ));
             passengers.add(new Passenger(
+                    3,
                     "raha",
                     Passenger.PassengerType.PREMIUM
             ));
@@ -66,6 +70,9 @@ public class TravelPackageBookingSystemConfiguration {
             travelPackageRepository.save(travelPackageEntity);
         };
     }
+
     @Bean
-    public ModelMapper modelMapper(){return new ModelMapper();}
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
 }

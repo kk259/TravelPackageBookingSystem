@@ -1,6 +1,9 @@
 package com.example.demo;
 
-import com.example.demo.Entity.*;
+import com.example.demo.Entity.Activity;
+import com.example.demo.Entity.Passenger;
+import com.example.demo.Entity.PassengerActivity;
+import com.example.demo.Entity.TravelPackage;
 import com.example.demo.Repository.*;
 import com.example.demo.Request.TravelPackageCreationRequest;
 import com.example.demo.Response.*;
@@ -10,9 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 @Service
 public class TravelPackageBookingSystemService {
@@ -21,6 +24,7 @@ public class TravelPackageBookingSystemService {
     private final ActivityRepository activityRepository;
     private final PassengerRepository passengerRepository;
     private final PassengerActivityRepository passengerActivityRepository;
+    Logger logger = LoggerFactory.getLogger(TravelPackageBookingSystemService.class);
 
     @Autowired
     public TravelPackageBookingSystemService(TravelPackageRepository travelPackageRepository, DestinationRepository destinationRepository, ActivityRepository activityRepository, PassengerRepository passengerRepository, PassengerActivityRepository passengerActivityRepository) {
@@ -32,13 +36,14 @@ public class TravelPackageBookingSystemService {
     }
 
     /**
-     *  Creates a travel package, including its associated destinations and activities in each destination.
+     * Creates a travel package, including its associated destinations and activities in each destination.
      */
     @Transactional
-    public boolean createTravelPackage(TravelPackageCreationRequest travelPackageCreationRequest){
-        if(travelPackageCreationRequest.getTravelPackageName().isEmpty()){
+    public boolean createTravelPackage(TravelPackageCreationRequest travelPackageCreationRequest) {
+        if (travelPackageCreationRequest.getTravelPackageName().isEmpty()) {
             return false;
         }
+        try {
             destinationRepository.saveAll(travelPackageCreationRequest.getDestinations());
             activityRepository.saveAll(travelPackageCreationRequest.getActivities());
             passengerRepository.saveAll(travelPackageCreationRequest.getPassengers());
@@ -50,10 +55,18 @@ public class TravelPackageBookingSystemService {
             );
             travelPackageRepository.save(travelPackage);
             return true;
+        } catch (DataAccessException ex) {
+            logger.error("Database exception occurred: " + ex.getMessage(), ex);
+            throw new RuntimeException("Failed to create a travel package due to a database error.", ex);
+        } catch (Exception ex) {
+            // Handle other exceptions
+            logger.error("An unexpected exception occurred: " + ex.getMessage(), ex);
+            throw new RuntimeException("Failed to create a travel package due to an unexpected error.", ex);
+        }
     }
 
     /**
-     *  Calculates the cost of an activity for a passenger based on the type : GOLD, STANDARD AND PREMIUM
+     * Calculates the cost of an activity for a passenger based on the type : GOLD, STANDARD AND PREMIUM
      */
     private int calculateAmountForPassenger(Passenger.PassengerType passengerType, int activityCost) {
         if (passengerType == Passenger.PassengerType.STANDARD) {
@@ -64,6 +77,7 @@ public class TravelPackageBookingSystemService {
             return 0;
         }
     }
+
     /**
      * Signs up a passenger for a specified activity, deducting the required amount from the passenger's balance.
      */
@@ -71,31 +85,29 @@ public class TravelPackageBookingSystemService {
     public Boolean signUpForActivity(int passengerNumber, String activityName) {
         Passenger passenger = passengerRepository.findPassengerByPassengerNumber(passengerNumber);
         Activity activity = activityRepository.findActivityByActivityName(activityName);
-        if(passenger==null || activity==null){
+        if (passenger == null || activity == null || !isActivityAvailable(activity)) {
             return false;
         }
         int activityCost = activity.getCost();
-        String destinationName = activity.getDestination().getDestinationName();
-        int amountForPassenger = calculateAmountForPassenger(passenger.getType(),activityCost);
-        if(!isActivityAvailable(activity)){
+        int amountForPassenger = calculateAmountForPassenger(passenger.getType(), activityCost);
+
+        if (amountForPassenger > passenger.getRemainingBalance()) {
             return false;
         }
-        if(amountForPassenger<=passenger.getRemainingBalance()){
-            passengerActivityRepository.save(new PassengerActivity(
-                    passengerNumber,
-                    activityName,
-                    amountForPassenger,
-                    destinationName
-            ));
-            passenger.setSpent(passenger.getSpent()+amountForPassenger);
-            activity.setOccupied(activity.getOccupied()+1);
-            return true;
-        }
-        return false;
+        String destinationName = activity.getDestination().getDestinationName();
+        passengerActivityRepository.save(new PassengerActivity(
+                passengerNumber,
+                activityName,
+                amountForPassenger,
+                destinationName
+        ));
+        passenger.setSpent(passenger.getSpent() + amountForPassenger);
+        activity.setOccupied(activity.getOccupied() + 1);
+        return true;
     }
 
     private boolean isActivityAvailable(Activity activity) {
-        return 0<activity.getSpacesAvailable();
+        return 0 < activity.getSpacesAvailable();
     }
 
     /**
@@ -104,35 +116,35 @@ public class TravelPackageBookingSystemService {
      * destinations and details of the activities available at each destination, like name, cost, capacity and description.
      */
     public TravelPackageItinerary getTravelPackageItinerary(String travelPackageName) {
-          TravelPackage travelPackage = travelPackageRepository.findTravelPackageByTravelPackageName(travelPackageName);
-          Set<DestinationWithActivites> destinationsWithActivites = travelPackage.getDestinations().stream()
+        TravelPackage travelPackage = travelPackageRepository.findTravelPackageByTravelPackageName(travelPackageName);
+        Set<DestinationWithActivites> destinationsWithActivites = travelPackage.getDestinations().stream()
                 .map(destination -> new DestinationWithActivites(
                         destination.getDestinationName(),
                         activityRepository.findActivitiesByItsDestination(destination)
                 ))
                 .collect(Collectors.toSet());
-          TravelPackageItinerary travelPackageItinerary = new TravelPackageItinerary(travelPackageName,
-                                                               destinationsWithActivites);
-          return travelPackageItinerary;
+        TravelPackageItinerary travelPackageItinerary = new TravelPackageItinerary(travelPackageName,
+                destinationsWithActivites);
+        return travelPackageItinerary;
     }
 
     /**
-     *     Print the passenger list of the travel package including:
-     *     1. package name,
-     *     2. passenger capacity,
-     *     3. number of passengers currently enrolled and
-     *     4. name and number of each passenger
+     * Print the passenger list of the travel package including:
+     * 1. package name,
+     * 2. passenger capacity,
+     * 3. number of passengers currently enrolled and
+     * 4. name and number of each passenger
      */
     public TravelPackagePassengerList getTravelPackagePassengerList(String travelPackageName) {
         TravelPackage travelPackage = travelPackageRepository.findTravelPackageByTravelPackageName(travelPackageName);
         TravelPackagePassengerList travelPackagePassengerList = new TravelPackagePassengerList(
-                                                                travelPackageName,
-                                                                travelPackage.getPassengerCapacity(),
-                                                                travelPackage.getCurrentEnrollmentCount(),
+                travelPackageName,
+                travelPackage.getPassengerCapacity(),
+                travelPackage.getCurrentEnrollmentCount(),
                 travelPackage.getPassengers().stream()
                         .map(passenger -> new PassengerDetails(passenger.getPassengerNumber(), passenger.getName()))
                         .collect(Collectors.toList())
-                                                                );
+        );
         return travelPackagePassengerList;
     }
 
@@ -151,10 +163,10 @@ public class TravelPackageBookingSystemService {
 
     /**
      * 3. Print the details of an individual passenger including their
-     *     1. name,
-     *     2. passenger number,
-     *     3. balance (if applicable),
-     *     4. list of each activity they have signed up for, including the destination the at which the activity is taking place and the price the passenger paid for the activity.
+     * 1. name,
+     * 2. passenger number,
+     * 3. balance (if applicable),
+     * 4. list of each activity they have signed up for, including the destination the at which the activity is taking place and the price the passenger paid for the activity.
      */
     public PassengerActivitiesDetails getPassengerActivitiesDetails(int passengerNumber) {
         Passenger passenger = passengerRepository.findPassengerByPassengerNumber(passengerNumber);

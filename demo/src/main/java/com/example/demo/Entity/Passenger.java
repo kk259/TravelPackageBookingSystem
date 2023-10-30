@@ -1,46 +1,49 @@
 package com.example.demo.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 
 @Table
-@Entity(name="Passenger")
+@Entity(name = "Passenger")
 public class Passenger {
     @Id
-    @SequenceGenerator(name = "passengerSequence", sequenceName = "passengerSequence",allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.AUTO , generator = "passengerSequence")
     int passengerNumber;
     String name;
     PassengerType type;
     int totalBalance;
+    @JsonIgnore
     int spent;
     @Transient
+    @JsonIgnore
     int remainingBalance;
+
     public enum PassengerType {
         STANDARD,
         GOLD,
         PREMIUM
     }
 
-    public Passenger(String name, PassengerType type) {
+    public Passenger(int passengerNumber, String name, PassengerType type) {
+        this.passengerNumber = passengerNumber;
         this.name = name;
         this.type = type;
         this.totalBalance = 1000;
         this.spent = 0;
     }
 
-    public Passenger(String name, PassengerType type, int totalBalance) {
-        this.name = name;
-        this.type = type;
-        this.totalBalance = totalBalance;
-        this.spent = 0;
-    }
-    public Passenger(String name) {
+    public Passenger(int passengerNumber, String name) {
+        this.passengerNumber = passengerNumber;
         this.name = name;
         this.type = PassengerType.STANDARD;
         this.totalBalance = 1000;
         this.spent = 0;
     }
+
     public Passenger() {
+        this.type = PassengerType.STANDARD;
+        this.totalBalance = 1000;
+        this.spent = 0;
     }
 
     public int getSpent() {

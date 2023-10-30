@@ -1,7 +1,6 @@
 package com.example.demo.Response;
 
 
-import com.example.demo.Entity.Activity;
 import com.example.demo.Entity.PassengerActivity;
 
 import java.util.Set;
